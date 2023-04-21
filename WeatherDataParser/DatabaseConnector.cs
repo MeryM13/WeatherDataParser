@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
-using System.Linq;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 using WeatherDataParser.CLASSES;
 
 namespace WeatherDataParser
@@ -177,7 +171,7 @@ namespace WeatherDataParser
             }
         }
 
-        public decimal GetAverage(CLASSES.Parameter parameter, DateTime from, DateTime to, int stationID)
+        public decimal GetAverage(Parameter parameter, DateTime from, DateTime to, int stationID)
         {
             using (SqlConnection conn = new(_connectionString))
             {
@@ -190,7 +184,7 @@ namespace WeatherDataParser
                 SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.Read())
                 {
-                    if (parameter == CLASSES.Parameter.Wind_Speed || parameter == CLASSES.Parameter.Humidity || parameter == CLASSES.Parameter.Snow_Height)
+                    if (parameter == Parameter.Wind_Speed || parameter == Parameter.Humidity || parameter == Parameter.Snow_Height)
                     {
                         try
                         {

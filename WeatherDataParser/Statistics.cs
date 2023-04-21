@@ -3,7 +3,7 @@ using System.Data;
 
 namespace WeatherDataParser
 {
-    internal class Statistics
+    public class Statistics
     {
         DateTime _from;
         DateTime _to;
@@ -111,7 +111,7 @@ namespace WeatherDataParser
             return chart;
         }
 
-        public Dictionary<DateTime, decimal> GetAveragesChart(CLASSES.Parameter parameter, DateInterval interval)
+        public Dictionary<DateTime, decimal> GetAveragesChart(Parameter parameter, DateInterval interval)
         {
             Dictionary<DateTime, decimal> chart = new();
             DateTime date = _from;
@@ -124,7 +124,7 @@ namespace WeatherDataParser
             return chart;
         }
 
-        public DataTable GetRawData(List<CLASSES.Parameter> parameters, bool useStationNameInsteadOfID, bool divideDateAndTime, bool onlyDate)
+        public DataTable GetRawData(List<Parameter> parameters, bool useStationNameInsteadOfID, bool divideDateAndTime, bool onlyDate)
         {
             string includes = string.Join(", ", parameters.ToArray());
             DataTable rawTable = _connector.GetRaw(includes, _from, _to, _stationID);
