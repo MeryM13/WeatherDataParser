@@ -58,30 +58,30 @@ namespace WeatherDataParser
 
         public void AddStation(int stationID)
         {
-            Station station = new Station();
-            while (true)
+            if (_connector.StationExists(stationID))
             {
-                try
-                {
-                    station.ID = stationID;
-                    Console.Write("Name: ");
-                    station.Name = Console.ReadLine();
-                    Console.Write("Location: ");
-                    station.Location = Console.ReadLine();
-                    Console.Write("Latitude: ");
-                    station.Latitude = decimal.Parse(Console.ReadLine().Replace(".", ","));
-                    Console.Write("Longitude: ");
-                    station.Longitude = decimal.Parse(Console.ReadLine().Replace(".", ","));
-                    Console.Write("Height: ");
-                    station.Height = decimal.Parse(Console.ReadLine().Replace(".", ","));
-                    _connector.AddStation(station);
-                    break;
-                }
-                catch
-                {
-                    Console.WriteLine("Incorrect value. Try again");
-                }
+                throw new Exception("Station already exists");
             }
+
+            string url = $@"http://www.pogodaiklimat.ru/weather.php?id={stationID}";
+            var doc = GetDocument(url);
+
+            var headline = doc.DocumentNode.SelectSingleNode("/html/body/div[1]/main/div/div/div/div/div/div[5]/div[2]/div/div[1]/h1");
+            if (headline.InnerText.Contains("(, )"))
+                throw new Exception("Station not found");
+
+            var archiveText = doc.DocumentNode.SelectSingleNode("/html/body/div[1]/main/div/div/div/div/div/div[5]/div[2]/div/div[5]");
+            Station newStation = new()
+            {
+                ID = stationID,
+                Name = archiveText.SelectSingleNode("span[1]").InnerText.Split('(')[0].Trim(),
+                Location = archiveText.SelectSingleNode("span[1]").InnerText.Split('(', ')')[1].Trim(),
+                Latitude = decimal.Parse(archiveText.SelectSingleNode("span[2]").InnerText.Replace(".", ",")),
+                Longitude = decimal.Parse(archiveText.SelectSingleNode("span[3]").InnerText.Replace(".", ",")),
+                Height = decimal.Parse(archiveText.SelectSingleNode("span[4]").InnerText.Split(' ')[0].Replace(".", ","))
+            };
+            Console.WriteLine($"{newStation.ID}, {newStation.Name}, {newStation.Location}, {newStation.Latitude}, {newStation.Longitude}, {newStation.Height}");
+            _connector.AddStation(newStation);
             ParseForStation(stationID, _startingDate);
         }
 

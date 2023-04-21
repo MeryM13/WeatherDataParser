@@ -111,23 +111,6 @@ namespace WeatherDataParser
             }
         }
 
-        public void AddStation(int ID, string name, string location, decimal latitude, decimal longitude, decimal height)
-        {
-            using (SqlConnection conn = new(_connectionString))
-            {
-                conn.Open();
-                string sql = "insert into Station values (@ID, @Name, @Location, @Latitude, @Longitude, @Height)";
-                SqlCommand cmd = new(sql, conn);
-                cmd.Parameters.AddWithValue("ID", ID);
-                cmd.Parameters.AddWithValue("Name", name);
-                cmd.Parameters.AddWithValue("Location", location);
-                cmd.Parameters.AddWithValue("Latitude", latitude);
-                cmd.Parameters.AddWithValue("Longitude", longitude);
-                cmd.Parameters.AddWithValue("Height", height);
-                cmd.ExecuteNonQuery();
-            }
-        }
-
         public void InsertData(WeatherData weatherData)
         {
             using (SqlConnection conn = new(_connectionString))
