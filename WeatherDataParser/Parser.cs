@@ -8,6 +8,7 @@ namespace WeatherDataParser
     {
         DateTime _startingDate;
         DatabaseConnector _connector;
+
         public Parser()
         {
             _startingDate = DefaultConfig.StartingDate;
@@ -51,12 +52,12 @@ namespace WeatherDataParser
                 Console.WriteLine($"Unknown station {stationID}. Do you want to add it to the database? y/n");
                 if (Console.ReadLine() == "y")
                 {
-                    AddStation(stationID);
+                    AddStation(FindStation(stationID);
                 }
             }
         }
 
-        public void AddStation(int stationID)
+        public Station FindStation(int stationID)
         {
             if (_connector.StationExists(stationID))
             {
@@ -71,7 +72,7 @@ namespace WeatherDataParser
                 throw new Exception("Station not found");
 
             var archiveText = doc.DocumentNode.SelectSingleNode("/html/body/div[1]/main/div/div/div/div/div/div[5]/div[2]/div/div[5]");
-            Station newStation = new()
+            return new()
             {
                 ID = stationID,
                 Name = archiveText.SelectSingleNode("span[1]").InnerText.Split('(')[0].Trim(),
@@ -80,9 +81,12 @@ namespace WeatherDataParser
                 Longitude = decimal.Parse(archiveText.SelectSingleNode("span[3]").InnerText.Replace(".", ",")),
                 Height = decimal.Parse(archiveText.SelectSingleNode("span[4]").InnerText.Split(' ')[0].Replace(".", ","))
             };
-            Console.WriteLine($"{newStation.ID}, {newStation.Name}, {newStation.Location}, {newStation.Latitude}, {newStation.Longitude}, {newStation.Height}");
+        }
+
+        public void AddStation(Station newStation)
+        {
             _connector.AddStation(newStation);
-            ParseForStation(stationID, _startingDate);
+            ParseForStation(newStation.ID, _startingDate);
         }
 
         public void FullUpdate()
@@ -92,6 +96,16 @@ namespace WeatherDataParser
             {
                 UpdateStationData(station);
             }
+        }
+
+        public List<string> GetStationNamesList()
+        {
+            List<string> list = new();
+            foreach (int id in _connector.GetStationIDList())
+            {
+                list.Add(_connector.GetStationName(id));
+            }
+            return list;
         }
 
         void ParseForStation(int station, DateTime startDate)
