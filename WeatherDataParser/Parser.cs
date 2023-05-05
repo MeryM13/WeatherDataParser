@@ -52,7 +52,7 @@ namespace WeatherDataParser
                 Console.WriteLine($"Unknown station {stationID}. Do you want to add it to the database? y/n");
                 if (Console.ReadLine() == "y")
                 {
-                    AddStation(FindStation(stationID);
+                    AddStation(FindStation(stationID));
                 }
             }
         }
@@ -106,6 +106,11 @@ namespace WeatherDataParser
                 list.Add(_connector.GetStationName(id));
             }
             return list;
+        }
+
+        public string GetStationInfo(int stationId)
+        {
+            return _connector.GetStationDescription(stationId);
         }
 
         void ParseForStation(int station, DateTime startDate)

@@ -66,6 +66,50 @@ namespace WeatherDataParser
                 }
             }
 
+            return windCount;
+        }
+
+        public Dictionary<decimal, decimal> GetPercentageWindRose(bool distributeCalm, int numberOfDirections)
+        {
+            Dictionary<decimal, decimal> windCount = new();
+            if (numberOfDirections != 8 && numberOfDirections != 16)
+            { throw new ArgumentException(); }
+
+            List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
+            foreach (int direction in windDirections)
+            {
+                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID));
+            }
+
+            if (numberOfDirections == 16)
+            {
+                List<decimal> innerDirections = new() { 22.5m, 67.5m, 112.5m, 157.5m, 202.5m, 247.5m, 292.5m, 337.5m };
+                foreach (decimal direction in innerDirections)
+                    windCount.Add(direction, 0);
+
+                int quarter = (int)Math.Round(windCount[windDirections[0]] / 4);
+                windCount[innerDirections[0]] += quarter;
+                windCount[innerDirections[7]] = +quarter;
+                windCount[windDirections[0]] -= quarter * 2;
+                for (int i = 1; i < 8; i++)
+                {
+                    quarter = (int)Math.Round(windCount[windDirections[i]] / 4);
+                    windCount[innerDirections[i - 1]] += quarter;
+                    windCount[innerDirections[i]] = +quarter;
+                    windCount[windDirections[i]] -= quarter * 2;
+                }
+                windCount = windCount.OrderBy(obj => obj.Key).ToDictionary(obj => obj.Key, obj => obj.Value);
+            }
+
+            if (distributeCalm)
+            {
+                int avgCalmPerDirection = (int)Math.Round((decimal)(GetCalmCount() / numberOfDirections));
+                foreach (var key in windCount.Keys)
+                {
+                    windCount[key] += avgCalmPerDirection;
+                }
+            }
+
             int sum = 0;
             foreach (var key in windCount.Keys)
                 sum += (int)windCount[key];
