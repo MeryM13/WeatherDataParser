@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using WeatherDataParser.CLASSES;
 using HtmlAgilityPack;
+using System.Net.NetworkInformation;
 
 namespace WeatherDataParser
 {
@@ -13,28 +14,65 @@ namespace WeatherDataParser
         {
             _startingDate = DefaultConfig.StartingDate;
             _connector = new DatabaseConnector();
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e) 
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public Parser(DateTime startingDate)
         {
             _startingDate = startingDate;
             _connector = new DatabaseConnector();
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public Parser(string connectionString)
         {
             _startingDate = DefaultConfig.StartingDate;
             _connector = new DatabaseConnector(connectionString);
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public Parser(DateTime startingDate, string connectionString)
         {
             _startingDate = startingDate;
             _connector = new DatabaseConnector(connectionString);
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public void UpdateStationData(int stationID)
         {
+            if (!InternetConnectionAvailable())
+            {
+                throw new Exception("Нет подключения к сети Интернет");
+            }
+
             if (_connector.StationExists(stationID))
             {
                 try
@@ -59,9 +97,14 @@ namespace WeatherDataParser
 
         public Station FindStation(int stationID)
         {
+            if (!InternetConnectionAvailable())
+            {
+                throw new Exception("Нет подключения к сети Интернет");
+            }
+
             if (_connector.StationExists(stationID))
             {
-                throw new Exception("Station already exists");
+                throw new Exception("Данная станция уже присутствует в базе данных");
             }
 
             string url = $@"http://www.pogodaiklimat.ru/weather.php?id={stationID}";
@@ -69,7 +112,7 @@ namespace WeatherDataParser
 
             var headline = doc.DocumentNode.SelectSingleNode("/html/body/div[1]/main/div/div/div/div/div/div[5]/div[2]/div/div[1]/h1");
             if (headline.InnerText.Contains("(, )"))
-                throw new Exception("Station not found");
+                throw new Exception("Метеостанция не найдена в архиве");
 
             var archiveText = doc.DocumentNode.SelectSingleNode("/html/body/div[1]/main/div/div/div/div/div/div[5]/div[2]/div/div[5]");
             return new()
@@ -85,12 +128,41 @@ namespace WeatherDataParser
 
         public void AddStation(Station newStation)
         {
+            if (!InternetConnectionAvailable())
+            {
+                throw new Exception("Нет подключения к сети Интернет");
+            }
+
+            try
+            {
+                if (newStation != FindStation(newStation.ID))
+                {
+                    if (DefaultConfig.ReplaceStationDataIfDiffersFromArchive)
+                    {
+                        newStation = FindStation(newStation.ID);
+                    }
+                    else
+                    {
+                        throw new Exception("Введенные данные не совпадают с данными архива");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+
             _connector.AddStation(newStation);
             ParseForStation(newStation.ID, _startingDate);
         }
 
         public void FullUpdate()
         {
+            if (!InternetConnectionAvailable())
+            {
+                throw new Exception("Нет подключения к сети Интернет");
+            }
+
             List<int> StationIDList = _connector.GetStationIDList();
             foreach (var station in StationIDList)
             {
@@ -163,7 +235,7 @@ namespace WeatherDataParser
             var dateList = GetDatesList(doc);
             var valueList = GetValuesList(doc);
             if (dateList.Count != valueList.Count)
-                throw new Exception("Unequal lists");
+                throw new Exception("Полученные таблицы были не равной длины");
 
             for (int i = 0; i < dateList.Count; i++)
             {
@@ -224,6 +296,24 @@ namespace WeatherDataParser
                 list.Add(value);
             }
             return list;
+        }
+
+        bool InternetConnectionAvailable()
+        {
+            try
+            {
+                Ping myPing = new();
+                String host = "pogodaiklimat.ru";
+                byte[] buffer = new byte[32];
+                int timeout = 1000;
+                PingOptions pingOptions = new();
+                PingReply reply = myPing.Send(host, timeout, buffer, pingOptions);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         HtmlDocument GetDocument(string url)

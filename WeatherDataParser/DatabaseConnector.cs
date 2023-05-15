@@ -18,6 +18,21 @@ namespace WeatherDataParser
             _connectionString = connectionString;
         }
 
+        public void DatabaseConnectionAvailable()
+        {
+            using (SqlConnection conn = new(_connectionString))
+            {
+                try
+                {
+                    conn.Open();
+                }
+                catch (SqlException)
+                {
+                    throw new Exception("Нет подключения к базе данных");
+                }
+            }
+        }
+
         public DateTime FindLastDate(int stationID)
         {
             using (SqlConnection conn = new(_connectionString))
@@ -32,7 +47,7 @@ namespace WeatherDataParser
                 {
                     return reader.GetDateTime(0);
                 }
-                throw new Exception();
+                throw new Exception("Не удалось обнаружить дату последней записи данных выбранной метеостанции");
             }
         }
 
@@ -148,7 +163,7 @@ namespace WeatherDataParser
                 {
                     return reader.GetInt32(0);
                 }
-                throw new Exception("Couldn't get count");
+                throw new Exception("Не получилось подсчитать количество записей");
             }
         }
 
@@ -167,7 +182,7 @@ namespace WeatherDataParser
                 {
                     return reader.GetInt32(0);
                 }
-                throw new Exception("Couldn't get count");
+                throw new Exception("Не получилось подсчитать общее количество записей");
             }
         }
 
@@ -201,7 +216,7 @@ namespace WeatherDataParser
                         catch (SqlNullValueException) { return 0; }
                     }
                 }
-                throw new Exception();
+                throw new Exception("Не получилось подсчитать среднее значение");
             }
         }
 
@@ -215,12 +230,14 @@ namespace WeatherDataParser
                 cmd.Parameters.AddWithValue("Station", stationID);
                 cmd.Parameters.AddWithValue("From", from);
                 cmd.Parameters.AddWithValue("To", to);
-                SqlDataAdapter adapter = new SqlDataAdapter(sql, conn);
-                adapter.SelectCommand = cmd;
+                SqlDataAdapter adapter = new(sql, conn)
+                {
+                    SelectCommand = cmd
+                };
                 DataSet ds = new();
                 adapter.Fill(ds);
                 return ds.Tables[0];
-                throw new Exception("Couldn't get count");
+                throw new Exception("Данные не найдены");
             }
         }
 
@@ -237,7 +254,7 @@ namespace WeatherDataParser
                 {
                     return $"{reader.GetString(0)} ({stationID})";
                 }
-                throw new Exception();
+                throw new Exception("Метеостанция с таким индексом не найдена в базе данных");
             }
         }
 
@@ -255,7 +272,7 @@ namespace WeatherDataParser
                     return $"Расположение: {reader.GetString(0)}; Географические координаты: широта: {reader.GetDecimal(1)}, " +
                         $"долгота: {reader.GetDecimal(2)}, высота над уровнем моря: {reader.GetDecimal(3)}";
                 }
-                throw new Exception();
+                throw new Exception("Метеостанция с таким индексом не найдена в базе данных");
             }
         }
     }

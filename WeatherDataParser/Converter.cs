@@ -82,7 +82,7 @@ namespace WeatherDataParser
             {
                 return (int.Parse(speed.Split('-')[0]) + int.Parse(speed.Split('-')[1])) / 2;
             }
-            if (string.IsNullOrEmpty(speed))
+            if (string.IsNullOrEmpty(speed) || !speed.Any(char.IsDigit))
             {
                 return 0;
             }

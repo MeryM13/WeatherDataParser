@@ -15,6 +15,14 @@ namespace WeatherDataParser
             _to = to;
             _stationID = stationID;
             _connector = new DatabaseConnector();
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public Statistics(DateTime from, DateTime to, int stationID, string connectionString)
@@ -23,13 +31,21 @@ namespace WeatherDataParser
             _to = to;
             _stationID = stationID;
             _connector = new DatabaseConnector(connectionString);
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
         }
 
         public Dictionary<decimal, decimal> GetWindRose(bool distributeCalm, int numberOfDirections)
         {
             Dictionary<decimal, decimal> windCount = new();
             if (numberOfDirections != 8 && numberOfDirections != 16)
-            { throw new ArgumentException(); }
+            { throw new ArgumentException("Указано неверное количество румбов розы"); }
 
             List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
             foreach (int direction in windDirections)
@@ -45,13 +61,13 @@ namespace WeatherDataParser
 
                 int quarter = (int)Math.Round(windCount[windDirections[0]] / 4);
                 windCount[innerDirections[0]] += quarter;
-                windCount[innerDirections[7]] = +quarter;
+                windCount[innerDirections[7]] += quarter;
                 windCount[windDirections[0]] -= quarter * 2;
                 for (int i = 1; i < 8; i++)
                 {
                     quarter = (int)Math.Round(windCount[windDirections[i]] / 4);
                     windCount[innerDirections[i - 1]] += quarter;
-                    windCount[innerDirections[i]] = +quarter;
+                    windCount[innerDirections[i]] += quarter;
                     windCount[windDirections[i]] -= quarter * 2;
                 }
                 windCount = windCount.OrderBy(obj => obj.Key).ToDictionary(obj => obj.Key, obj => obj.Value);
@@ -73,7 +89,7 @@ namespace WeatherDataParser
         {
             Dictionary<decimal, decimal> windCount = new();
             if (numberOfDirections != 8 && numberOfDirections != 16)
-            { throw new ArgumentException(); }
+            { throw new ArgumentException("Указано неверное количество румбов розы"); }
 
             List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
             foreach (int direction in windDirections)
@@ -89,13 +105,13 @@ namespace WeatherDataParser
 
                 int quarter = (int)Math.Round(windCount[windDirections[0]] / 4);
                 windCount[innerDirections[0]] += quarter;
-                windCount[innerDirections[7]] = +quarter;
+                windCount[innerDirections[7]] += quarter;
                 windCount[windDirections[0]] -= quarter * 2;
                 for (int i = 1; i < 8; i++)
                 {
                     quarter = (int)Math.Round(windCount[windDirections[i]] / 4);
                     windCount[innerDirections[i - 1]] += quarter;
-                    windCount[innerDirections[i]] = +quarter;
+                    windCount[innerDirections[i]] += quarter;
                     windCount[windDirections[i]] -= quarter * 2;
                 }
                 windCount = windCount.OrderBy(obj => obj.Key).ToDictionary(obj => obj.Key, obj => obj.Value);
@@ -227,6 +243,64 @@ namespace WeatherDataParser
                 {
                     rawTable.Columns[name].SetOrdinal(i);
                     i++;
+                    switch (name)
+                        {
+                        case "Station":
+                            {
+                                rawTable.Columns[name].ColumnName = "Индекс ВМО";
+                                break;
+                            }
+                        case "Station_Name":
+                            {
+                                rawTable.Columns[name].ColumnName = "Название метеостанции";
+                                break;
+                            }
+                        case "Date_Only":
+                            {
+                                rawTable.Columns[name].ColumnName = "Дата измерения";
+                                break;
+                            }
+                        case "Time_Only":
+                            {
+                                rawTable.Columns[name].ColumnName = "Время измерения";
+                                break;
+                            }
+                        case "Date":
+                            {
+                                rawTable.Columns[name].ColumnName = "Дата и время измерения";
+                                break;
+                            }
+                        case "Wind_Direction":
+                            {
+                                rawTable.Columns[name].ColumnName = "Направление ветра, градусы";
+                                break;
+                            }
+                        case "Wind_Speed":
+                            {
+                                rawTable.Columns[name].ColumnName = "Скорость ветра, мс";
+                                break;
+                            }
+                        case "Temperature":
+                            {
+                                rawTable.Columns[name].ColumnName = "Температура воздуха, градусы С";
+                                break;
+                            }
+                        case "Humidity":
+                            {
+                                rawTable.Columns[name].ColumnName = "Относительная влажность воздуха, %";
+                                break;
+                            }
+                        case "Pressure":
+                            {
+                                rawTable.Columns[name].ColumnName = "Атмосферное давление, гПа";
+                                break;
+                            }
+                        case "Snow_Height":
+                            {
+                                rawTable.Columns[name].ColumnName = "Высота снежного покрова, см";
+                                break;
+                            }
+                    }
                 }
             }
             return rawTable;
