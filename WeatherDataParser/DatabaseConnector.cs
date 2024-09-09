@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Microsoft.Office.Interop.Excel;
+using System.Data;
 using System.Data.SqlClient;
 using System.Data.SqlTypes;
 using WeatherDataParser.CLASSES;
@@ -158,6 +159,25 @@ namespace WeatherDataParser
                 {
                     cmd.Parameters.AddWithValue("Direction", direction);
                 }
+                SqlDataReader reader = cmd.ExecuteReader();
+                if (reader.Read())
+                {
+                    return reader.GetInt32(0);
+                }
+                throw new Exception("Не получилось подсчитать количество записей");
+            }
+        }
+
+        public int GetWeakCount(DateTime from, DateTime to, int stationID)
+        {
+            using (SqlConnection conn = new(_connectionString))
+            {
+                conn.Open();
+                string sql = "select count(*) from [Data] where Station = @Station and Wind_Speed < 3 and Date between @From and @To";
+                SqlCommand cmd = new(sql, conn);
+                cmd.Parameters.AddWithValue("Station", stationID);
+                cmd.Parameters.AddWithValue("From", from);
+                cmd.Parameters.AddWithValue("To", to);
                 SqlDataReader reader = cmd.ExecuteReader();
                 if (reader.Read())
                 {
