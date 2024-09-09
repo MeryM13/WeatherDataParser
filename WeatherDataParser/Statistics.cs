@@ -151,6 +151,21 @@ namespace WeatherDataParser
             return Math.Round(GetCalmCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
         }
 
+        public int GetWeakCount()
+        {
+            return _connector.GetWeakCount(_from, _to, _stationID);
+        }
+
+        public decimal GetWeakPeriodicity()
+        {
+            return GetWeakCount() / _connector.GetAll(_from, _to, _stationID);
+        }
+
+        public decimal GetWeakPeriodicity(int roundUp)
+        {
+            return Math.Round(GetWeakCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
+        }
+
         public Dictionary<DateTime, decimal> GetWindPeriodicityChart(decimal? direction, DateInterval interval)
         {
             Dictionary<DateTime, decimal> chart = new();
