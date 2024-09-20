@@ -5,16 +5,16 @@ namespace WeatherDataParser
 {
     public class Statistics
     {
-        DateTime _from;
-        DateTime _to;
-        int _stationID;
-        DatabaseConnector _connector;
+        readonly DateTime _from;
+        readonly DateTime _to;
+        readonly int _stationID;
+        readonly DatabaseConnector _connector;
         public Statistics(DateTime from, DateTime to, int stationID)
         {
             _from = from;
             _to = to;
             _stationID = stationID;
-            _connector = new DatabaseConnector();
+            _connector = new SQLITEconnector();
             try
             {
                 _connector.DatabaseConnectionAvailable();
@@ -30,7 +30,65 @@ namespace WeatherDataParser
             _from = from;
             _to = to;
             _stationID = stationID;
-            _connector = new DatabaseConnector(connectionString);
+            _connector = new SQLITEconnector(connectionString);
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Statistics(DateTime from, DateTime to, int stationID, int mode)
+        {
+            _from = from;
+            _to = to;
+            _stationID = stationID;
+            switch (mode)
+            {
+                case 1:
+                    {
+                        _connector = new SQLITEconnector();
+                        break;
+                    }
+                case 2:
+                    {
+                        _connector = new MSSQLconnector();
+                        break;
+                    }
+                default: { throw new Exception("Unknown database mode"); }
+            }
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Statistics(DateTime from, DateTime to, int stationID, string connectionString, int mode)
+        {
+            _from = from;
+            _to = to;
+            _stationID = stationID;
+            switch (mode)
+            {
+                case 1:
+                    {
+                        _connector = new SQLITEconnector(connectionString);
+                        break;
+                    }
+                case 2:
+                    {
+                        _connector = new MSSQLconnector(connectionString);
+                        break;
+                    }
+                default: { throw new Exception("Unknown database mode"); }
+            }
             try
             {
                 _connector.DatabaseConnectionAvailable();
@@ -151,19 +209,19 @@ namespace WeatherDataParser
             return Math.Round(GetCalmCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
         }
 
-        public int GetWeakCount()
+        public int GetLowSpeedCount()
         {
-            return _connector.GetWeakCount(_from, _to, _stationID);
+            return _connector.GetLowSpeedCount(_from, _to, _stationID);
         }
 
         public decimal GetWeakPeriodicity()
         {
-            return GetWeakCount() / _connector.GetAll(_from, _to, _stationID);
+            return GetLowSpeedCount() / _connector.GetAll(_from, _to, _stationID);
         }
 
         public decimal GetWeakPeriodicity(int roundUp)
         {
-            return Math.Round(GetWeakCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
+            return Math.Round(GetLowSpeedCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
         }
 
         public Dictionary<DateTime, decimal> GetWindPeriodicityChart(decimal? direction, DateInterval interval)
