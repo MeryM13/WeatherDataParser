@@ -7,13 +7,13 @@ namespace WeatherDataParser
 {
     public class Parser
     {
-        DateTime _startingDate;
-        DatabaseConnector _connector;
+        readonly DateTime _startingDate;
+        readonly DatabaseConnector _connector;
 
         public Parser()
         {
             _startingDate = DefaultConfig.StartingDate;
-            _connector = new DatabaseConnector();
+            _connector = new SQLITEconnector();
             try
             {
                 _connector.DatabaseConnectionAvailable();
@@ -27,7 +27,7 @@ namespace WeatherDataParser
         public Parser(DateTime startingDate)
         {
             _startingDate = startingDate;
-            _connector = new DatabaseConnector();
+            _connector = new SQLITEconnector();
             try
             {
                 _connector.DatabaseConnectionAvailable();
@@ -41,7 +41,7 @@ namespace WeatherDataParser
         public Parser(string connectionString)
         {
             _startingDate = DefaultConfig.StartingDate;
-            _connector = new DatabaseConnector(connectionString);
+            _connector = new SQLITEconnector(connectionString);
             try
             {
                 _connector.DatabaseConnectionAvailable();
@@ -55,7 +55,115 @@ namespace WeatherDataParser
         public Parser(DateTime startingDate, string connectionString)
         {
             _startingDate = startingDate;
-            _connector = new DatabaseConnector(connectionString);
+            _connector = new SQLITEconnector(connectionString);
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Parser(int mode)
+        {
+            _startingDate = DefaultConfig.StartingDate;
+            switch (mode)
+            {
+                case 1:
+                    {
+                        _connector = new SQLITEconnector();
+                        break;
+                    }
+                case 2:
+                    {
+                        _connector = new MSSQLconnector();
+                        break;
+                    }
+                default: { throw new Exception("Unknown database mode"); }
+            }
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Parser(DateTime startingDate, int mode)
+        {
+            _startingDate = startingDate;
+            switch (mode)
+            {
+                case 1:
+                    {
+                        _connector = new SQLITEconnector();
+                        break;
+                    }
+                case 2:
+                    {
+                        _connector = new MSSQLconnector();
+                        break;
+                    }
+                default: { throw new Exception("Unknown database mode"); }
+            }
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Parser(string connectionString, int mode)
+        {
+            _startingDate = DefaultConfig.StartingDate;
+            switch (mode)
+            {
+                case 1:
+                    {
+                        _connector = new SQLITEconnector(connectionString);
+                        break;
+                    }
+                case 2:
+                    {
+                        _connector = new MSSQLconnector(connectionString);
+                        break;
+                    }
+                default: { throw new Exception("Unknown database mode"); }
+            }
+            try
+            {
+                _connector.DatabaseConnectionAvailable();
+            }
+            catch (Exception e)
+            {
+                throw new Exception(e.Message);
+            }
+        }
+
+        public Parser(DateTime startingDate, string connectionString, int mode)
+        {
+            _startingDate = startingDate;
+            switch (mode)
+            {
+                case 1:
+                    {
+                        _connector = new SQLITEconnector(connectionString);
+                        break;
+                    }
+                case 2:
+                    {
+                        _connector = new MSSQLconnector(connectionString);
+                        break;
+                    }
+                default: { throw new Exception("Unknown database mode"); }
+            }
             try
             {
                 _connector.DatabaseConnectionAvailable();
@@ -249,7 +357,7 @@ namespace WeatherDataParser
             }
         }
 
-        bool EmptyValueLine(ParsedValue value)
+        static bool EmptyValueLine(ParsedValue value)
         {
             if (string.IsNullOrEmpty(value.windDirection) || string.IsNullOrEmpty(value.windSpeed)
                 || string.IsNullOrEmpty(value.pressure) || string.IsNullOrEmpty(value.humidity)
@@ -258,7 +366,7 @@ namespace WeatherDataParser
             return false;
         }
 
-        List<ParsedDate> GetDatesList(HtmlDocument htmlDoc)
+        static List<ParsedDate> GetDatesList(HtmlDocument htmlDoc)
         {
             var datesTable = htmlDoc.DocumentNode.SelectSingleNode(@"/html/body/div[1]/main/div/div/div/div/div/div[5]/div[2]/div/div[2]/div[1]/table");
             var rows = datesTable.SelectNodes("tr");
@@ -275,7 +383,7 @@ namespace WeatherDataParser
             return list;
         }
 
-        List<ParsedValue> GetValuesList(HtmlDocument htmlDoc)
+        static List<ParsedValue> GetValuesList(HtmlDocument htmlDoc)
         {
             var valuesTable =
                 htmlDoc.DocumentNode.SelectSingleNode(
@@ -298,7 +406,7 @@ namespace WeatherDataParser
             return list;
         }
 
-        bool InternetConnectionAvailable()
+        static bool InternetConnectionAvailable()
         {
             try
             {
@@ -316,7 +424,7 @@ namespace WeatherDataParser
             }
         }
 
-        HtmlDocument GetDocument(string url)
+        static HtmlDocument GetDocument(string url)
         {
             HtmlWeb web = new()
             {
@@ -326,7 +434,7 @@ namespace WeatherDataParser
             return doc;
         }
 
-        int GetLastDayOfMonth(int month, int year)
+        static int GetLastDayOfMonth(int month, int year)
         {
             switch (month)
             {
