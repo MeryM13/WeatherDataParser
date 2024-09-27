@@ -22,6 +22,11 @@ namespace WeatherDataParser
             _connectionString = connectionString;
         }
 
+        public override void CreateDatabase()
+        {
+            //throw new NotImplementedException();
+        }
+
         public override void DatabaseConnectionAvailable()
         {
             using SqlConnection conn = new(_connectionString);
@@ -155,6 +160,32 @@ namespace WeatherDataParser
             throw new Exception("Не получилось подсчитать количество записей");
         }
 
+        public override int GetCount(decimal? direction, DateTime from, DateTime to, int stationID, int maxSpeed)
+        {
+            using SqlConnection conn = new(_connectionString);
+            conn.Open();
+            string sql;
+            if (direction == null)
+                sql = "select count(*) from [Data] where Station = @Station and Wind_Direction is null and Date between @From and @To and Wind_Speed < @MaxSpeed";
+            else
+                sql = "select count(*) from [Data] where Station = @Station and Wind_Direction = @Direction and Date between @From and @To and Wind_Speed < @MaxSpeed";
+            SqlCommand cmd = new(sql, conn);
+            cmd.Parameters.AddWithValue("Station", stationID);
+            cmd.Parameters.AddWithValue("From", from);
+            cmd.Parameters.AddWithValue("To", to);
+            cmd.Parameters.AddWithValue("MaxSpeed", maxSpeed);
+            if (direction != null)
+            {
+                cmd.Parameters.AddWithValue("Direction", direction);
+            }
+            SqlDataReader reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return reader.GetInt32(0);
+            }
+            throw new Exception("Не получилось подсчитать количество записей");
+        }
+
         public override int GetLowSpeedCount(DateTime from, DateTime to, int stationID)
         {
             using SqlConnection conn = new(_connectionString);
@@ -172,7 +203,7 @@ namespace WeatherDataParser
             throw new Exception("Не получилось подсчитать количество записей");
         }
 
-        public override decimal GetAll(DateTime from, DateTime to, int stationID)
+        public override int GetAll(DateTime from, DateTime to, int stationID)
         {
             using SqlConnection conn = new(_connectionString);
             conn.Open();
@@ -184,7 +215,7 @@ namespace WeatherDataParser
             SqlDataReader reader = cmd.ExecuteReader();
             if (reader.Read())
             {
-                return reader.GetInt32(0);
+                return reader.GetInt32(0) - 1;
             }
             throw new Exception("Не получилось подсчитать общее количество записей");
         }

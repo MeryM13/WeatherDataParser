@@ -143,6 +143,74 @@ namespace WeatherDataParser
             return windCount;
         }
 
+        public Dictionary<decimal, decimal> GetWindRose(bool distributeCalm, int numberOfDirections, int maxSpeed)
+        {
+            Dictionary<decimal, decimal> windCount = new();
+            if (numberOfDirections != 8 && numberOfDirections != 16)
+            { throw new ArgumentException("Указано неверное количество румбов розы"); }
+
+            List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
+            foreach (int direction in windDirections)
+            {
+                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID));
+            }
+
+            if (numberOfDirections == 16)
+            {
+                List<decimal> innerDirections = new() { 22.5m, 67.5m, 112.5m, 157.5m, 202.5m, 247.5m, 292.5m, 337.5m };
+                foreach (decimal direction in innerDirections)
+                    windCount.Add(direction, 0);
+
+                int quarter = (int)Math.Round(windCount[windDirections[0]] / 4);
+                windCount[innerDirections[0]] += quarter;
+                windCount[innerDirections[7]] += quarter;
+                windCount[windDirections[0]] -= quarter * 2;
+                for (int i = 1; i < 8; i++)
+                {
+                    quarter = (int)Math.Round(windCount[windDirections[i]] / 4);
+                    windCount[innerDirections[i - 1]] += quarter;
+                    windCount[innerDirections[i]] += quarter;
+                    windCount[windDirections[i]] -= quarter * 2;
+                }
+                windCount = windCount.OrderBy(obj => obj.Key).ToDictionary(obj => obj.Key, obj => obj.Value);
+            }
+
+            if (distributeCalm)
+            {
+                int avgCalmPerDirection = (int)Math.Round((decimal)(GetCalmCount() / numberOfDirections));
+                foreach (var key in windCount.Keys)
+                {
+                    windCount[key] += avgCalmPerDirection;
+                }
+            }
+
+            return windCount;
+        }
+
+        public List<Dictionary<decimal, decimal>> GetDifferentiatedWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
+        {
+            List<Dictionary<decimal, decimal>> differentiatedRose = new();
+
+            foreach(int maxSpeed in maxSpeeds)
+            {
+                differentiatedRose.Add(GetWindRose(distributeCalm,numberOfDirections,maxSpeed));
+            }
+
+            return differentiatedRose;
+        }
+
+        public List<Dictionary<decimal, decimal>> GetDifferentiatedPercentageWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
+        {
+            List<Dictionary<decimal, decimal>> differentiatedRose = new();
+
+            foreach (int maxSpeed in maxSpeeds)
+            {
+                differentiatedRose.Add(GetPercentageWindRose(distributeCalm, numberOfDirections, maxSpeed));
+            }
+
+            return differentiatedRose;
+        }
+
         public Dictionary<decimal, decimal> GetPercentageWindRose(bool distributeCalm, int numberOfDirections)
         {
             Dictionary<decimal, decimal> windCount = new();
@@ -194,6 +262,62 @@ namespace WeatherDataParser
             return windCount;
         }
 
+        public Dictionary<decimal, decimal> GetPercentageWindRose(bool distributeCalm, int numberOfDirections, int maxSpeed)
+        {
+            Dictionary<decimal, decimal> windCount = new();
+            if (numberOfDirections != 8 && numberOfDirections != 16)
+            { throw new ArgumentException("Указано неверное количество румбов розы"); }
+
+            List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
+            foreach (int direction in windDirections)
+            {
+                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID));
+            }
+
+            if (numberOfDirections == 16)
+            {
+                List<decimal> innerDirections = new() { 22.5m, 67.5m, 112.5m, 157.5m, 202.5m, 247.5m, 292.5m, 337.5m };
+                foreach (decimal direction in innerDirections)
+                    windCount.Add(direction, 0);
+
+                int quarter = (int)Math.Round(windCount[windDirections[0]] / 4);
+                windCount[innerDirections[0]] += quarter;
+                windCount[innerDirections[7]] += quarter;
+                windCount[windDirections[0]] -= quarter * 2;
+                for (int i = 1; i < 8; i++)
+                {
+                    quarter = (int)Math.Round(windCount[windDirections[i]] / 4);
+                    windCount[innerDirections[i - 1]] += quarter;
+                    windCount[innerDirections[i]] += quarter;
+                    windCount[windDirections[i]] -= quarter * 2;
+                }
+                windCount = windCount.OrderBy(obj => obj.Key).ToDictionary(obj => obj.Key, obj => obj.Value);
+            }
+
+            if (distributeCalm)
+            {
+                int avgCalmPerDirection = (int)Math.Round((decimal)(GetCalmCount() / numberOfDirections));
+                foreach (var key in windCount.Keys)
+                {
+                    windCount[key] += avgCalmPerDirection;
+                }
+            }
+
+            int sum = 0;
+            foreach (var key in windCount.Keys)
+                sum += (int)windCount[key];
+
+            foreach (var key in windCount.Keys)
+                windCount[key] = Math.Round(windCount[key] / sum, 3);
+
+            return windCount;
+        }
+
+        public int GetAll()
+        {
+            return _connector.GetAll(_from, _to, _stationID);
+        }
+
         public int GetCalmCount()
         {
             return _connector.GetCount(null, _from, _to, _stationID);
@@ -201,12 +325,12 @@ namespace WeatherDataParser
 
         public decimal GetCalmPeriodicity()
         {
-            return GetCalmCount() / _connector.GetAll(_from, _to, _stationID);
+            return GetCalmCount() / (decimal)GetAll();
         }
 
         public decimal GetCalmPeriodicity(int roundUp)
         {
-            return Math.Round(GetCalmCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
+            return Math.Round((decimal)(GetCalmCount() / GetAll()), roundUp);
         }
 
         public int GetLowSpeedCount()
@@ -216,12 +340,12 @@ namespace WeatherDataParser
 
         public decimal GetWeakPeriodicity()
         {
-            return GetLowSpeedCount() / _connector.GetAll(_from, _to, _stationID);
+            return GetLowSpeedCount() / (decimal)GetAll();
         }
 
         public decimal GetWeakPeriodicity(int roundUp)
         {
-            return Math.Round(GetLowSpeedCount() / _connector.GetAll(_from, _to, _stationID), roundUp);
+            return Math.Round((decimal)(GetLowSpeedCount() / GetAll()), roundUp);
         }
 
         public Dictionary<DateTime, decimal> GetWindPeriodicityChart(decimal? direction, DateInterval interval)
@@ -233,7 +357,7 @@ namespace WeatherDataParser
                 DateTime getTo = DateAndTime.DateAdd(interval, 1, date);
                 try
                 {
-                    chart.Add(date, _connector.GetCount(direction, date, getTo, _stationID) / _connector.GetAll(date, getTo, _stationID));
+                    chart.Add(date, _connector.GetCount(direction, date, getTo, _stationID) / (decimal)GetAll());
                 }
                 catch (DivideByZeroException)
                 {
