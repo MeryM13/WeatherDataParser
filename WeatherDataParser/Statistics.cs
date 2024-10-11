@@ -152,7 +152,7 @@ namespace WeatherDataParser
             List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
             foreach (int direction in windDirections)
             {
-                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID));
+                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID, maxSpeed));
             }
 
             if (numberOfDirections == 16)
@@ -252,9 +252,9 @@ namespace WeatherDataParser
                 }
             }
 
-            int sum = 0;
-            foreach (var key in windCount.Keys)
-                sum += (int)windCount[key];
+            int sum = GetAll();
+            //foreach (var key in windCount.Keys)
+            //    sum += (int)windCount[key];
 
             foreach (var key in windCount.Keys)
                 windCount[key] = Math.Round(windCount[key] / sum, 3);
@@ -271,7 +271,7 @@ namespace WeatherDataParser
             List<int> windDirections = new() { 0, 45, 90, 135, 180, 225, 270, 315 };
             foreach (int direction in windDirections)
             {
-                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID));
+                windCount.Add(direction, _connector.GetCount(direction, _from, _to, _stationID, maxSpeed));
             }
 
             if (numberOfDirections == 16)
@@ -303,9 +303,7 @@ namespace WeatherDataParser
                 }
             }
 
-            int sum = 0;
-            foreach (var key in windCount.Keys)
-                sum += (int)windCount[key];
+            int sum = GetAll();
 
             foreach (var key in windCount.Keys)
                 windCount[key] = Math.Round(windCount[key] / sum, 3);

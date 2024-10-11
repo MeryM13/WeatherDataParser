@@ -255,19 +255,21 @@ namespace WeatherDataParser
         public override DataTable GetRaw(string parameters, DateTime from, DateTime to, int stationID)
         {
             using SqlConnection conn = new(_connectionString);
-            conn.Open();
-            string sql = $"select {parameters} from [Data] where Station = @Station and Date between @From and @To";
-            SqlCommand cmd = new(sql, conn);
-            cmd.Parameters.AddWithValue("Station", stationID);
-            cmd.Parameters.AddWithValue("From", from);
-            cmd.Parameters.AddWithValue("To", to);
-            SqlDataAdapter adapter = new(sql, conn)
             {
-                SelectCommand = cmd
-            };
-            DataSet ds = new();
-            adapter.Fill(ds);
-            return ds.Tables[0];
+                conn.Open();
+                string sql = $"select {parameters} from [Data] where Station = @Station and Date between @From and @To";
+                SqlCommand cmd = new(sql, conn);
+                cmd.Parameters.AddWithValue("Station", stationID);
+                cmd.Parameters.AddWithValue("From", from);
+                cmd.Parameters.AddWithValue("To", to);
+                SqlDataAdapter adapter = new(sql, conn)
+                {
+                    SelectCommand = cmd
+                };
+                DataSet ds = new();
+                adapter.Fill(ds);
+                return ds.Tables[0];
+            }
             throw new Exception("Данные не найдены");
         }
 

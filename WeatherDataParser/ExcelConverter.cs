@@ -1,59 +1,147 @@
-﻿using System;
+﻿using Microsoft.VisualBasic;
+using OfficeOpenXml;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Excel = Microsoft.Office.Interop.Excel;
+using WeatherDataParser.CLASSES;
 
 namespace WeatherDataParser
 {
     internal class ExcelConverter
     {
-        string SheetPath;
+        string FilePath;
+
+        public ExcelConverter()
+        {
+            FilePath = DefaultConfig.ExcelFilesPath;
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        }
+
         public ExcelConverter(string path) 
         {
-            SheetPath = path;
+            FilePath = path;
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
         }
 
-        void OpenSheet()
+        #region RawDataConversion
+        public void Convert(string listName, DataTable data, DateInterval divider)
         {
-            //opens sheet
-            //if no sheet detected
-            CreateSheet();
+            using (var package = new ExcelPackage())
+            {
+                switch (divider)
+                {
+                    case DateInterval.Day:
+                        {
+                            Dictionary<string, DataTable> dividedWeatherData = data.AsEnumerable().
+                                GroupBy(row => new string($"{DateTime.Parse(row.Field<string>("Дата измерения")).Year}." +
+                                                            $"{DateTime.Parse(row.Field<string>("Дата измерения")).Month}." +
+                                                            $"{DateTime.Parse(row.Field<string>("Дата измерения")).Day}")).
+                                ToDictionary(group => group.Key, group => group.CopyToDataTable());
+                            foreach (var pair in dividedWeatherData)
+                            {
+                                Convert(pair.Key, pair.Value, package);
+                            }
+                            break;
+                        }
+                    case DateInterval.Month:
+                        {
+                            Dictionary<string, DataTable> dividedWeatherData = data.AsEnumerable().
+                                GroupBy(row => new string($"{DateTime.Parse(row.Field<string>("Дата измерения")).Year}." +
+                                                          $"{DateTime.Parse(row.Field<string>("Дата измерения")).Month}")).
+                                ToDictionary(group => group.Key, group => group.CopyToDataTable());
+                            foreach (var pair in dividedWeatherData)
+                            {
+                                Convert(pair.Key, pair.Value, package);
+                            }
+                            break;
+                        }
+                    case DateInterval.Year:
+                        {
+                            Dictionary<string, DataTable> dividedWeatherData = data.AsEnumerable().
+                                GroupBy(row => new string($"{DateTime.Parse(row.Field<string>("Дата измерения")).Year}")).
+                                ToDictionary(group => group.Key, group => group.CopyToDataTable());
+                            foreach (var pair in dividedWeatherData)
+                            {
+                                Convert(pair.Key, pair.Value, package);
+                            }
+                            break;
+                        }
+                    default:
+                        {
+                            Convert(listName, data, package);
+                            break;
+                        }
+                }
+                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+            }
         }
 
-        void CreateSheet()
+        public void Convert(string listName, DataTable data)
         {
-            //create shhet with given path
-            //then
-            OpenSheet();
+            using (var package = new ExcelPackage())
+            {
+                Convert(listName, data, package);
+                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+            }
         }
 
-        void CheckListExists(string name)
+        public void Convert(string listName, DataTable data, ExcelPackage package)
         {
-            //checks if the list with given name
-            //already exists in a sheet
+            var sheet = package.Workbook.Worksheets.Add(listName);
+            sheet.Cells[1, 1].LoadFromDataTable(data, c => c.PrintHeaders = true);
+            sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
         }
+        #endregion
 
-        void CreateList(string name)
+        #region WindRoseConversion
+        public void Convert(string listName, List<Dictionary<decimal, decimal>> data, int[] speeds)
         {
-            //if not
-            CheckListExists(name);
-            //creates a list in a sheet with
-            //generated name
-        }
+            var insert = new List<Dictionary<string, object>>();
+            foreach (var entry in data)
+            {
+                insert.Add(entry.ToDictionary(x => x.Key.ToString(), x => (object)x.Value));
+            }
 
-        public void Convert(string listName, DataSet data)
-        {
-            //puts dataset of meteodata into
-            //a newly generated list
+            using (var package = new ExcelPackage())
+            {
+                var sheet = package.Workbook.Worksheets.Add(listName);
+                sheet.Cells[1, 1].Value = "Направление";
+                sheet.Cells[1, 2].LoadFromArrays(new List<object[]>() { speeds.Cast<object>().ToArray() });
+                sheet.Cells[2, 1].LoadFromDictionaries(insert, c => { c.PrintHeaders = true; c.Transpose = true; });
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+            }
         }
-
         public void Convert(string listName, Dictionary<decimal,decimal> data)
-        { }
+        {
+            using (var package = new ExcelPackage())
+            {
+                var sheet = package.Workbook.Worksheets.Add(listName);
+                sheet.Cells[1, 1].Value = "Направление";
+                sheet.Cells[1, 2].Value = "Значение";
+                sheet.Cells[2, 1].LoadFromDictionaries(new List<Dictionary<string, object>>() { data.ToDictionary(x => x.Key.ToString(), x => (object)x.Value) }, c => { c.PrintHeaders = true; c.Transpose = true; });
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+            }
+        }
+        #endregion
 
+        #region ChartsConversion
         public void Convert(string listName, Dictionary<DateTime, decimal> data)
-        { }
+        {
+            using (var package = new ExcelPackage())
+            {
+                var sheet = package.Workbook.Worksheets.Add(listName);
+                sheet.Cells[1, 1].Value = "Дата";
+                sheet.Cells[1, 2].Value = "Значение";
+                sheet.Cells[2, 1].LoadFromDictionaries(new List<Dictionary<string, object>>() { data.ToDictionary(x => x.Key.ToShortDateString(), x => (object)x.Value) }, c => { c.PrintHeaders = true; c.Transpose = true; });
+                sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
+                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+            }
+        }
+        #endregion
     }
 }
