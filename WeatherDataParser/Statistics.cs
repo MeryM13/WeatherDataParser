@@ -187,25 +187,25 @@ namespace WeatherDataParser
             return windCount;
         }
 
-        public List<Dictionary<decimal, decimal>> GetDifferentiatedWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
+        public Dictionary<int, Dictionary<decimal, decimal>> GetDifferentiatedWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
         {
-            List<Dictionary<decimal, decimal>> differentiatedRose = new();
+            Dictionary<int, Dictionary<decimal, decimal>> differentiatedRose = new();
 
             foreach(int maxSpeed in maxSpeeds)
             {
-                differentiatedRose.Add(GetWindRose(distributeCalm,numberOfDirections,maxSpeed));
+                differentiatedRose.Add(maxSpeed, GetWindRose(distributeCalm,numberOfDirections,maxSpeed));
             }
 
             return differentiatedRose;
         }
 
-        public List<Dictionary<decimal, decimal>> GetDifferentiatedPercentageWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
+        public Dictionary<int, Dictionary<decimal, decimal>> GetDifferentiatedPercentageWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
         {
-            List<Dictionary<decimal, decimal>> differentiatedRose = new();
+            Dictionary<int, Dictionary<decimal, decimal>> differentiatedRose = new();
 
             foreach (int maxSpeed in maxSpeeds)
             {
-                differentiatedRose.Add(GetPercentageWindRose(distributeCalm, numberOfDirections, maxSpeed));
+                differentiatedRose.Add(maxSpeed, GetPercentageWindRose(distributeCalm, numberOfDirections, maxSpeed));
             }
 
             return differentiatedRose;
@@ -253,8 +253,6 @@ namespace WeatherDataParser
             }
 
             int sum = GetAll();
-            //foreach (var key in windCount.Keys)
-            //    sum += (int)windCount[key];
 
             foreach (var key in windCount.Keys)
                 windCount[key] = Math.Round(windCount[key] / sum, 3);

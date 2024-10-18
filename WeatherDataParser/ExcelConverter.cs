@@ -10,10 +10,9 @@ using WeatherDataParser.CLASSES;
 
 namespace WeatherDataParser
 {
-    internal class ExcelConverter
+    public class ExcelConverter
     {
-        string FilePath;
-
+        readonly string FilePath;
         public ExcelConverter()
         {
             FilePath = DefaultConfig.ExcelFilesPath;
@@ -75,7 +74,7 @@ namespace WeatherDataParser
                             break;
                         }
                 }
-                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+                package.SaveAs(new FileInfo(FilePath + $"{listName}.xlsx"));
             }
         }
 
@@ -84,7 +83,7 @@ namespace WeatherDataParser
             using (var package = new ExcelPackage())
             {
                 Convert(listName, data, package);
-                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+                package.SaveAs(new FileInfo(FilePath + $"{listName}.xlsx"));
             }
         }
 
@@ -112,7 +111,7 @@ namespace WeatherDataParser
                 sheet.Cells[1, 2].LoadFromArrays(new List<object[]>() { speeds.Cast<object>().ToArray() });
                 sheet.Cells[2, 1].LoadFromDictionaries(insert, c => { c.PrintHeaders = true; c.Transpose = true; });
                 sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
-                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+                package.SaveAs(new FileInfo(FilePath + $"{listName} .xlsx"));
             }
         }
         public void Convert(string listName, Dictionary<decimal,decimal> data)
@@ -124,7 +123,7 @@ namespace WeatherDataParser
                 sheet.Cells[1, 2].Value = "Значение";
                 sheet.Cells[2, 1].LoadFromDictionaries(new List<Dictionary<string, object>>() { data.ToDictionary(x => x.Key.ToString(), x => (object)x.Value) }, c => { c.PrintHeaders = true; c.Transpose = true; });
                 sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
-                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+                package.SaveAs(new FileInfo(FilePath + $"{listName}.xlsx"));
             }
         }
         #endregion
@@ -139,7 +138,7 @@ namespace WeatherDataParser
                 sheet.Cells[1, 2].Value = "Значение";
                 sheet.Cells[2, 1].LoadFromDictionaries(new List<Dictionary<string, object>>() { data.ToDictionary(x => x.Key.ToShortDateString(), x => (object)x.Value) }, c => { c.PrintHeaders = true; c.Transpose = true; });
                 sheet.Cells[sheet.Dimension.Address].AutoFitColumns();
-                package.SaveAs(new FileInfo(FilePath + $"_{DateTime.Now.ToShortDateString()}"));
+                package.SaveAs(new FileInfo(FilePath + $"{listName}.xlsx"));
             }
         }
         #endregion
