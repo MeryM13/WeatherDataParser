@@ -96,10 +96,13 @@ namespace WeatherDataParser
         #endregion
 
         #region WindRoseConversion
-        public void Convert(string listName, List<Dictionary<decimal, decimal>> data, int[] speeds)
+        public void Convert(string listName, Dictionary<int, Dictionary<decimal, decimal>> data)
         {
+            var values = data.Values.ToList();
+            var speeds = data.Keys.ToList();
+
             var insert = new List<Dictionary<string, object>>();
-            foreach (var entry in data)
+            foreach (var entry in values)
             {
                 insert.Add(entry.ToDictionary(x => x.Key.ToString(), x => (object)x.Value));
             }

@@ -187,7 +187,7 @@ namespace WeatherDataParser
             return windCount;
         }
 
-        public Dictionary<int, Dictionary<decimal, decimal>> GetDifferentiatedWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
+        public Dictionary<int, Dictionary<decimal, decimal>> GetDifferentiatedWindRose(bool distributeCalm, int numberOfDirections, List<int> maxSpeeds)
         {
             Dictionary<int, Dictionary<decimal, decimal>> differentiatedRose = new();
 
@@ -199,7 +199,7 @@ namespace WeatherDataParser
             return differentiatedRose;
         }
 
-        public Dictionary<int, Dictionary<decimal, decimal>> GetDifferentiatedPercentageWindRose(bool distributeCalm, int numberOfDirections, int[] maxSpeeds)
+        public Dictionary<int, Dictionary<decimal, decimal>> GetDifferentiatedPercentageWindRose(bool distributeCalm, int numberOfDirections, List<int> maxSpeeds)
         {
             Dictionary<int, Dictionary<decimal, decimal>> differentiatedRose = new();
 
