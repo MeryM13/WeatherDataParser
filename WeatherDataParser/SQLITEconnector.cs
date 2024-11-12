@@ -287,7 +287,7 @@ namespace WeatherDataParser
             using (SQLiteConnection conn = new(_connectionString))
             {
                 conn.Open();
-                string sql = $"select avg({parameter}) from [Data] where Station = @Station and Date between @From and @To limit {count}";
+                string sql = $"select avg({parameter}) as average_param from [Data] where Station = @Station and Date between @From and @To limit {count}";
                 SQLiteCommand cmd = new(sql, conn);
                 cmd.Parameters.AddWithValue("Station", stationID);
                 cmd.Parameters.AddWithValue("From", from);
@@ -302,6 +302,7 @@ namespace WeatherDataParser
                             return reader.GetInt32(0);
                         }
                         catch (SqlNullValueException) { return 0; }
+                        catch (InvalidCastException) { return 0; }
                     }
                     else
                     {
@@ -310,6 +311,7 @@ namespace WeatherDataParser
                             return reader.GetDecimal(0);
                         }
                         catch (SqlNullValueException) { return 0; }
+                        catch (InvalidCastException) { return 0; }
                     }
                 }
                 throw new Exception("Не получилось подсчитать среднее значение");

@@ -425,7 +425,8 @@ namespace WeatherDataParser
 
             if (onlyDate && divideDateAndTime)
             {
-                rawTable.Columns.Remove("Time_Only");
+                if (rawTable.Columns.Contains("Time_Only"))
+                    rawTable.Columns.Remove("Time_Only");
             }
 
             string[] columnNames = new string[] { "Station", "Station_Name", "Date_Only", "Time_Only", "Date", "Wind_Direction", "Wind_Speed", "Temperature", "Humidity", "Pressure", "Snow_Height" };
