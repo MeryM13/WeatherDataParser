@@ -299,7 +299,7 @@ namespace WeatherDataParser
                     {
                         try
                         {
-                            return reader.GetInt32(0);
+                            return reader.GetDecimal(0);
                         }
                         catch (SqlNullValueException) { return 0; }
                         catch (InvalidCastException) { return 0; }
