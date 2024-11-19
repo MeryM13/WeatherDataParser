@@ -353,7 +353,7 @@ namespace WeatherDataParser
                 DateTime getTo = DateAndTime.DateAdd(interval, 1, date);
                 try
                 {
-                    chart.Add(date, _connector.GetCount(direction, date, getTo, _stationID) / (decimal)GetAll());
+                    chart.Add(date, _connector.GetCount(direction, date, getTo, _stationID) / (decimal)_connector.GetAll(date, getTo, _stationID));
                 }
                 catch (DivideByZeroException)
                 {
